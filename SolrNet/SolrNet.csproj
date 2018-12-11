@@ -16,6 +16,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageIconUrl>https://github.com/solrnet/solrnet/raw/master/Documentation/solr.png</PackageIconUrl>
     <PackageId>SolrNet.Core</PackageId>
+    <AssemblyVersion>1.0.13.1</AssemblyVersion>
+    <FileVersion>1.0.13.1</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
     <DocumentationFile>bin\Release\netstandard2.0\SolrNet.xml</DocumentationFile>
