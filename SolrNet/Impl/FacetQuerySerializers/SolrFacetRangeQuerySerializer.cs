@@ -56,6 +56,9 @@ namespace SolrNet.Impl.FacetQuerySerializers
                     yield return KV.Create(string.Format("f.{0}.facet.range.include", fieldWithoutLocalParams), i.ToString());
             if (q.Method != null)
                 yield return KV.Create($"f.{fieldWithoutLocalParams}.facet.range.method", SerializeSingle(q.Method));
+            if (q.MinCount.HasValue)
+                yield return KV.Create(string.Format("f.{0}.facet.mincount", fieldWithoutLocalParams), q.MinCount.ToString());
+
         }
     }
 }

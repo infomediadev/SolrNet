@@ -110,6 +110,15 @@ namespace SolrNet {
         }
 
         /// <summary>
+        /// This param indicates the minimum counts for facet fields should be included in the response.
+        /// The default value is 0.
+        /// This value is set on a field basis and takes presedence 
+        /// over <see cref="FacetParameters.MinCount"/>
+        /// </summary>
+        public int? MinCount { get; set; }
+
+
+        /// <summary>
         /// Sets the type of algorithm or method Solr should use for range faceting. Both methods produce the same results, but performance may vary.
         /// </summary>
         public FacetRangeMethod Method { get; set; }
