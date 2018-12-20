@@ -20,25 +20,44 @@ using System.Linq;
 using System.Text;
 using SolrNet.Exceptions;
 
-namespace SolrNet {
+namespace SolrNet
+{
     /// <summary>
     /// Provides a way to "localize" information about a specific argument that is being sent to Solr. 
     /// In other words, it provides a way to add meta-data to certain argument types such as query strings.
     /// </summary>
     /// <see href="http://wiki.apache.org/solr/LocalParams"/>
-    public class LocalParams : Dictionary<string, string> {
+    public class LocalParams : Dictionary<string, string>
+    {
+
+        /// <summary>
+        /// Get the bool indicating if the localParmams formatter should add quotes\
+        /// on a value if the value contains whitespaces
+        /// </summary>
+        public bool UseQuote { get; private set; }
+
+
         /// <summary>
         /// New local params
         /// </summary>
-        public LocalParams() {}
+        /// <param name="useQuote">Should the value be quoted if whitespaces are present</param>
+        public LocalParams(bool useQuote = true)
+        {
+            UseQuote = useQuote;
+        }
 
         /// <summary>
         /// New local params from dictionary
         /// </summary>
         /// <param name="dictionary"></param>
-        public LocalParams(IDictionary<string, string> dictionary) : base(dictionary) {}
+        /// <param name="useQuote">Should the value be quoted if whitespaces are present</param>
+        public LocalParams(IDictionary<string, string> dictionary, bool useQuote = true) : base(dictionary)
+        {
+            UseQuote = useQuote;
+        }
 
-        public override string ToString() {
+        public override string ToString()
+        {
             if (Count == 0)
                 return string.Empty;
             var sb = new StringBuilder();
@@ -48,10 +67,13 @@ namespace SolrNet {
             return sb.ToString();
         }
 
-        private static string Quote(string v) {
+        private string Quote(string v)
+        {
             if (v == null)
                 throw new SolrNetException("Null LocalParam value");
             if (!v.Contains(" "))
+                return v;
+            if (!UseQuote)
                 return v;
             return string.Format("'{0}'", v.Replace("'", "\\'"));
         }
@@ -59,7 +81,8 @@ namespace SolrNet {
         /// <summary>
         /// Query object from a query + local params
         /// </summary>
-        public class LocalParamsQuery: ISolrQuery {
+        public class LocalParamsQuery : ISolrQuery
+        {
             private readonly ISolrQuery query;
             private readonly LocalParams local;
 
@@ -68,7 +91,8 @@ namespace SolrNet {
             /// </summary>
             /// <param name="query"></param>
             /// <param name="local"></param>
-            public LocalParamsQuery(ISolrQuery query, LocalParams local) {
+            public LocalParamsQuery(ISolrQuery query, LocalParams local)
+            {
                 this.query = query;
                 this.local = local;
             }
@@ -76,19 +100,22 @@ namespace SolrNet {
             /// <summary>
             /// Query part
             /// </summary>
-            public ISolrQuery Query {
+            public ISolrQuery Query
+            {
                 get { return query; }
             }
 
             /// <summary>
             /// Local params part
             /// </summary>
-            public LocalParams Local {
+            public LocalParams Local
+            {
                 get { return local; }
             }
         }
 
-        public static ISolrQuery operator + (LocalParams p, ISolrQuery q) {
+        public static ISolrQuery operator +(LocalParams p, ISolrQuery q)
+        {
             return new LocalParamsQuery(q, p);
         }
     }
