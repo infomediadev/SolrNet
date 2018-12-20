@@ -19,6 +19,11 @@ namespace SolrNet.Impl
         private readonly ISolrConnection conn;
         private readonly string serverUrl;
 
+        /// <summary>
+        /// HTTP connection timeout
+        /// </summary>
+        public int Timeout { get; set; }
+
         public PostSolrConnection(ISolrConnection conn, string serverUrl)
         {
             this.conn = conn;
@@ -61,21 +66,36 @@ namespace SolrNet.Impl
 
         public SolrQueryResponse Get(string relativeUrl, IEnumerable<KeyValuePair<string, string>> parameters)
         {
-            var queryParameters = parameters?.ToList();
-            var g = PrepareGet(relativeUrl, queryParameters);
+            var u = new UriBuilder(serverUrl);
+            u.Path += relativeUrl;
+            var request = (HttpWebRequest)WebRequest.Create(u.Uri);
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            var qs = string.Join("&", parameters
+                .Select(kv => string.Format("{0}={1}", HttpUtility.UrlEncode(kv.Key), HttpUtility.UrlEncode(kv.Value)))
+                .ToArray());
+            request.ContentLength = Encoding.UTF8.GetByteCount(qs);
+            request.ProtocolVersion = HttpVersion.Version11;
+            request.KeepAlive = true;
+            if (Timeout > 0)
+            {
+                request.ReadWriteTimeout = Timeout;
+                request.Timeout = Timeout;
+            }
             try
             {
-                using (var postParams = g.request.GetRequestStream())
+                using (var postParams = request.GetRequestStream())
                 using (var sw = new StreamWriter(postParams))
-                    sw.Write(g.queryString);
-                using (var response = g.request.GetResponse())
+                    sw.Write(qs);
+                using (var response = request.GetResponse())
                 using (var responseStream = response.GetResponseStream())
                 using (var sr = new StreamReader(responseStream, Encoding.UTF8, true))
                 {
                     var solrResponse = new SolrQueryResponse(sr.ReadToEnd());
-                    solrResponse.MetaData.OriginalQuery = g.queryString;
+                    solrResponse.MetaData.OriginalQuery = qs;
                     return solrResponse;
                 }
+
             }
             catch (WebException e)
             {
@@ -107,10 +127,10 @@ namespace SolrNet.Impl
             }
         }
 
-     public SolrQueryResponse PostStream(string relativeUrl, string contentType, System.IO.Stream content, IEnumerable<KeyValuePair<string, string>> getParameters)
-     {
-			return conn.PostStream(relativeUrl, contentType, content, getParameters);
-		}
+        public SolrQueryResponse PostStream(string relativeUrl, string contentType, System.IO.Stream content, IEnumerable<KeyValuePair<string, string>> getParameters)
+        {
+            return conn.PostStream(relativeUrl, contentType, content, getParameters);
+        }
         public Task<SolrQueryResponse> PostStreamAsync(string relativeUrl, string contentType, System.IO.Stream content, IEnumerable<KeyValuePair<string, string>> getParameters)
         {
             return conn.PostStreamAsync(relativeUrl, contentType, content, getParameters);
